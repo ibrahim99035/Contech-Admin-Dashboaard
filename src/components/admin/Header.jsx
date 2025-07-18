@@ -1,5 +1,6 @@
-import React from 'react';
-import { Settings, Bell, LogOut, Sun, Moon } from 'lucide-react';
+// src/components/admin/Header.jsx
+import React, { useState } from 'react';
+import { Settings, Bell, LogOut, Sun, Moon, Loader2 } from 'lucide-react';
 import useGoogleOAuth from '../../hooks/useGoogleOAuth';
 
 const GoogleIcon = () => (
@@ -12,16 +13,48 @@ const GoogleIcon = () => (
 );
 
 const Header = ({ activeTab, activeTabIcon: ActiveTabIcon, sidebarCollapsed, setSidebarCollapsed, darkMode, setDarkMode }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
   const loginWithGoogle = useGoogleOAuth();
 
   const handleGoogleLogin = async () => {
+    setIsLoading(true);
     try {
+      console.log('🔐 Starting Google login...');
       const userData = await loginWithGoogle();
-      console.log('Login successful:', userData);
-      // Optional: Redirect or trigger context update
+      console.log('🔐 Login successful:', userData);
+      
+      if (userData.user) {
+        setUser(userData.user);
+        console.log(`🔐 Welcome, ${userData.user.name}!`);
+        
+        // Optional: Show success toast instead of console log
+        // You could add a toast library here
+      }
     } catch (err) {
-      console.error('Login failed:', err);
+      console.error('🔐 Login failed:', err);
+      
+      // More user-friendly error messages
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.message.includes('popup')) {
+        errorMessage = 'Please allow popups for this site and try again.';
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (err.message.includes('cancelled')) {
+        errorMessage = 'Login was cancelled.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setUser(null);
+    console.log('Logged out successfully');
   };
 
   return (
@@ -36,7 +69,9 @@ const Header = ({ activeTab, activeTabIcon: ActiveTabIcon, sidebarCollapsed, set
           </button>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 capitalize">{activeTab}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Welcome to your admin dashboard</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {user ? `Welcome back, ${user.name}` : 'Welcome to your admin dashboard'}
+            </p>
           </div>
         </div>
 
@@ -46,9 +81,14 @@ const Header = ({ activeTab, activeTabIcon: ActiveTabIcon, sidebarCollapsed, set
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </button>
 
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-            <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
+          {user && (
+            <button 
+              onClick={handleLogout}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </button>
+          )}
 
           <button
             className="p-2 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow transition-colors flex items-center gap-2"
@@ -59,14 +99,37 @@ const Header = ({ activeTab, activeTabIcon: ActiveTabIcon, sidebarCollapsed, set
             <span className="hidden sm:inline">{darkMode ? 'Dark' : 'Light'}</span>
           </button>
 
-          {/* Google login icon */}
-          <button
-            onClick={handleGoogleLogin}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center"
-            aria-label="Google Login"
-          >
-            <GoogleIcon />
-          </button>
+          {/* User profile or login button */}
+          {user ? (
+            <div className="flex items-center space-x-2">
+              {user.picture && (
+                <img 
+                  src={user.picture} 
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
+                {user.name}
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              aria-label="Google Login"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <GoogleIcon />
+              )}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </header>
