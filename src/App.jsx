@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import './App.css'
 import AdminDashboard from './pages/AdminDashboard';
 import GoToTopButton from './components/GoToTopButton';
 import NotFound from './components/NotFound';

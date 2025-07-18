@@ -15,7 +15,7 @@ const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stat
     <div className="p-4 border-b border-gray-200 dark:border-gray-800">
       <div className="flex items-center space-x-3">
         <div className="w-8 h-8 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
-          <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
+          <img src={logo} alt="Logo" className="w-25 h-25 object-contain" />
         </div>
         {!sidebarCollapsed && (
           <div>
@@ -60,11 +60,11 @@ const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stat
           )}
         </button>
       ))}
-      {!sidebarCollapsed && (
+      {/* {!sidebarCollapsed && (
           <div>
-            <img src={logoTitled} alt="Logo" className="mx-auto mt-5 w-25 h-auto object-contain" />
+            <img src={logoTitled} alt="Logo" className="mx-auto mt-5 w-auto h-auto object-contain" />
           </div>
-      )}
+      )} */}
     </nav>
 
     {/* Admin Info */}
