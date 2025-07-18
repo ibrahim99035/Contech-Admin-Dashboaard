@@ -1,0 +1,23 @@
+.goToTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px;
+    background-color: var(--dark-color); /* Dark background color */
+    color: var(--bg-color); /* Background color for text */
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+  
+.goToTopBtn:hover{
+    background-color: var(--main-color);
+}
+
+.goToTopBtn.visible {
+    display: block;
+    opacity: 1;
+}
