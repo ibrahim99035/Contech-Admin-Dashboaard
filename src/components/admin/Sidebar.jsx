@@ -1,5 +1,7 @@
 import React from 'react';
-import { Home, User } from 'lucide-react';
+import { User } from 'lucide-react';
+import logo from '/Icons/x-icon.png';
+import logoTitled from '/Icons/CT-titled.png';
 
 const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stats }) => (
   <div
@@ -12,12 +14,12 @@ const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stat
     {/* Logo section */}
     <div className="p-4 border-b border-gray-200 dark:border-gray-800">
       <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-          <Home className="w-5 h-5 text-white" />
+        <div className="w-8 h-8 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
+          <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
         </div>
         {!sidebarCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">HomeAuto</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Contech IoT</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Admin Panel</p>
           </div>
         )}
@@ -32,12 +34,20 @@ const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stat
           onClick={() => setActiveTab(item.id)}
           className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors
             ${
-              activeTab === item.id
+              !sidebarCollapsed && activeTab === item.id
                 ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300 border-r-2 border-blue-600 dark:border-blue-400'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
         >
-          <item.icon className="w-5 h-5" />
+          <span className="flex items-center justify-center w-8 h-8">
+            <item.icon
+              className={`w-6 h-6 transition-colors ${
+                sidebarCollapsed && activeTab === item.id
+                  ? 'text-blue-600 dark:text-blue-300'
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}
+            />
+          </span>
           {!sidebarCollapsed && (
             <>
               <span className="flex-1 text-left">{item.label}</span>
@@ -50,6 +60,11 @@ const Sidebar = ({ sidebarCollapsed, activeTab, setActiveTab, sidebarItems, stat
           )}
         </button>
       ))}
+      {!sidebarCollapsed && (
+          <div>
+            <img src={logoTitled} alt="Logo" className="mx-auto mt-5 w-25 h-auto object-contain" />
+          </div>
+      )}
     </nav>
 
     {/* Admin Info */}

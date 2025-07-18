@@ -9,6 +9,7 @@ import {
   Settings, 
   BarChart3 
 } from 'lucide-react';
+
 import Sidebar from '../components/admin/Sidebar';
 import Header from '../components/admin/Header';
 import OverviewContent from '../components/admin/OverviewContent';
@@ -22,7 +23,7 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
+  
   const stats = {
     totalUsers: 1247,
     totalApartments: 89,
@@ -51,6 +52,9 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
+
+  // Find the icon for the active tab
+  const activeTabIcon = sidebarItems.find(item => item.id === activeTab)?.icon || Settings;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -91,6 +95,7 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
       <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-gray-900 transition-colors">
         <Header 
           activeTab={activeTab}
+          activeTabIcon={activeTabIcon}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
           darkMode={darkMode}
