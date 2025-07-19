@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import './App.css'
 import AdminDashboard from './pages/AdminDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 import GoToTopButton from './components/GoToTopButton';
 import NotFound from './components/NotFound';
 
@@ -45,12 +46,25 @@ const App = () => {
               element={
                 <>
                   <Helmet>
-                    <title>ConTech - Home</title>
+                    <title>ConTech - Admin Dashboard</title>
                   </Helmet>
-                  {/* Pass darkMode and setDarkMode to AdminDashboard for Header toggle */}
-                  <AdminDashboard darkMode={darkMode} setDarkMode={setDarkMode} />
-                  <GoToTopButton />
+                  <ProtectedRoute darkMode={darkMode} setDarkMode={setDarkMode}>
+                    <AdminDashboard darkMode={darkMode} setDarkMode={setDarkMode} />
+                    <GoToTopButton />
+                  </ProtectedRoute>
                 </>
+              }
+            />
+            {/* Auth callback route for OAuth flow */}
+            <Route
+              path='/auth/callback'
+              element={
+                <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-gray-400">Processing authentication...</p>
+                  </div>
+                </div>
               }
             />
             <Route path='*' element={<NotFound />} />
