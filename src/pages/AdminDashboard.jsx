@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Users, 
@@ -9,6 +9,8 @@ import {
   Settings, 
   BarChart3 
 } from 'lucide-react';
+
+import { userAdminApi } from '../api/userAdmin.api';
 
 import Sidebar from '../components/admin/Sidebar';
 import Header from '../components/admin/Header';
@@ -23,17 +25,41 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
-  const stats = {
-    totalUsers: 1247,
-    totalApartments: 89,
-    totalRooms: 456,
-    totalDevices: 2134,
-    activeTasks: 78,
-    overdueTasks: 12,
-    onlineDevices: 1987,
-    offlineDevices: 147
-  };
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalApartments: 0,
+    totalRooms: 0,
+    totalDevices: 0,
+    activeTasks: 0,
+    overdueTasks: 0,
+    onlineDevices: 0,
+    offlineDevices: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await userAdminApi.getUserStatistics();
+        if (res.success && res.data) {
+          // Map API response to stats used in OverviewContent
+          setStats({
+            totalUsers: res.data.userGrowth?.total ?? 0,
+            totalApartments: res.data.contentCreation?.totalApartments ?? 0,
+            totalRooms: res.data.contentCreation?.totalRooms ?? 0,
+            totalDevices: res.data.contentCreation?.totalDevices ?? 0,
+            activeTasks: res.data.systemHealth?.activeTasks ?? 0,
+            overdueTasks: res.data.systemHealth?.failedTasks ?? 0,
+            onlineDevices: res.data.systemHealth?.onlineDevices ?? 0,
+            offlineDevices: res.data.systemHealth?.offlineDevices ?? 0,
+          });
+        }
+      } catch (err) {
+        // Optionally handle error
+        console.error('Failed to fetch statistics:', err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const recentActivity = [
     { id: 1, type: 'user', action: 'New user registered', user: 'John Doe', time: '2 minutes ago' },

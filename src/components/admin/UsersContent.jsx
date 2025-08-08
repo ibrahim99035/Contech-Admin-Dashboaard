@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Plus,
   Search,
@@ -12,15 +12,33 @@ import {
   Trash2
 } from 'lucide-react';
 import StatCard from './StatCard';
+import { userAdminApi } from '../../api/userAdmin.api';
 
 const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
-  const users = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'customer', apartment: 'Sunset Complex #101', status: 'active', joinDate: '2024-01-15' },
-    { id: 2, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'moderator', apartment: 'Green Valley #205', status: 'active', joinDate: '2024-02-03' },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'customer', apartment: 'City Heights #302', status: 'inactive', joinDate: '2024-03-10' },
-    { id: 4, name: 'Emma Davis', email: 'emma@example.com', role: 'customer', apartment: 'Sunset Complex #203', status: 'active', joinDate: '2024-03-22' },
-    { id: 5, name: 'Alex Thompson', email: 'alex@example.com', role: 'admin', apartment: 'Admin Access', status: 'active', joinDate: '2024-01-01' },
-  ];
+  const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 10; // You can adjust this as needed
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const res = await userAdminApi.getAllUsers({ page, limit });
+        if (res.success && res.data) {
+          setUsers(res.data);
+          setPagination(res.pagination);
+        }
+      } catch (err) {
+        // Optionally handle error
+        setUsers([]);
+        setPagination(null);
+      }
+      setLoading(false);
+    };
+    fetchUsers();
+  }, [page]);
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -52,9 +70,9 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <StatCard title="Total Users" value={stats.totalUsers} icon={Users} color="blue" />
-        <StatCard title="Active Users" value="1,156" icon={UserCheck} color="green" />
-        <StatCard title="Inactive Users" value="91" icon={UserX} color="red" />
-        <StatCard title="Admins" value="8" icon={Shield} color="purple" />
+        <StatCard title="Active Users" value={stats.activeUsers ?? '-'} icon={UserCheck} color="green" />
+        <StatCard title="Inactive Users" value={stats.inactiveUsers ?? '-'} icon={UserX} color="red" />
+        <StatCard title="Admins" value={stats.roleDistribution?.admin ?? '-'} icon={Shield} color="purple" />
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
@@ -91,51 +109,92 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
-                          {user.name.split(' ').map(n => n[0]).join('')}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{user.apartment}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.joinDate}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8">Loading...</td>
                 </tr>
-              ))}
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8">No users found.</td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                            {user.name.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {user.apartments && user.apartments.length > 0
+                        ? user.apartments.map(a => a.name).join(', ')
+                        : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.active ? 'active' : 'inactive')}`}>
+                        {user.active ? 'active' : 'inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+        {/* Pagination Controls */}
+        {pagination && (
+          <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {pagination.startIndex + 1} to {pagination.endIndex + 1} of {pagination.total} users
+            </span>
+            <div className="flex space-x-2">
+              <button
+                className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-100 disabled:opacity-50"
+                disabled={!pagination.hasPrev}
+                onClick={() => setPage(pagination.prevPage)}
+              >
+                Prev
+              </button>
+              <span className="px-3 py-1">{pagination.page} / {pagination.pages}</span>
+              <button
+                className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-100 disabled:opacity-50"
+                disabled={!pagination.hasNext}
+                onClick={() => setPage(pagination.nextPage)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
