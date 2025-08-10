@@ -34,27 +34,64 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
     overdueTasks: 0,
     onlineDevices: 0,
     offlineDevices: 0,
+    // Room specific stats
+    connectedRooms: 0,
+    roomsWithPassword: 0,
+    roomTypeDistribution: {},
+    averageRoomsPerUser: 0,
   });
+  
+  const [fullAnalytics, setFullAnalytics] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await userAdminApi.getUserStatistics();
-        if (res.success && res.data) {
-          // Map API response to stats used in OverviewContent
+        // Get comprehensive analytics from getAllUsers
+        const usersResponse = await userAdminApi.getAllUsers({ page: 1, limit: 1 });
+        
+        // Get dashboard statistics
+        const statsResponse = await userAdminApi.getUserStatistics();
+        
+        if (usersResponse.success && usersResponse.analysis) {
+          const analysis = usersResponse.analysis;
+          
+          // Store full analytics for passing to components
+          setFullAnalytics(analysis);
+          
+          // Map data to stats state
           setStats({
-            totalUsers: res.data.userGrowth?.total ?? 0,
-            totalApartments: res.data.contentCreation?.totalApartments ?? 0,
-            totalRooms: res.data.contentCreation?.totalRooms ?? 0,
-            totalDevices: res.data.contentCreation?.totalDevices ?? 0,
-            activeTasks: res.data.systemHealth?.activeTasks ?? 0,
-            overdueTasks: res.data.systemHealth?.failedTasks ?? 0,
-            onlineDevices: res.data.systemHealth?.onlineDevices ?? 0,
-            offlineDevices: res.data.systemHealth?.offlineDevices ?? 0,
+            totalUsers: analysis.totalUsers ?? 0,
+            totalApartments: statsResponse.data?.contentCreation?.totalApartments ?? 0,
+            totalRooms: analysis.totalRooms ?? 0,
+            totalDevices: statsResponse.data?.contentCreation?.totalDevices ?? 0,
+            activeTasks: statsResponse.data?.systemHealth?.activeTasks ?? 0,
+            overdueTasks: statsResponse.data?.systemHealth?.failedTasks ?? 0,
+            onlineDevices: statsResponse.data?.systemHealth?.onlineDevices ?? 0,
+            offlineDevices: statsResponse.data?.systemHealth?.offlineDevices ?? 0,
+            // Room analytics from backend
+            connectedRooms: analysis.connectedRooms ?? 0,
+            roomsWithPassword: analysis.roomsWithPassword ?? 0,
+            roomTypeDistribution: analysis.roomTypeDistribution ?? {},
+            averageRoomsPerUser: analysis.averageRoomsPerUser ?? 0,
+          });
+        } else if (statsResponse.success && statsResponse.data) {
+          // Fallback to basic stats if getAllUsers doesn't work
+          setStats({
+            totalUsers: statsResponse.data.userGrowth?.total ?? 0,
+            totalApartments: statsResponse.data.contentCreation?.totalApartments ?? 0,
+            totalRooms: statsResponse.data.contentCreation?.totalRooms ?? 0,
+            totalDevices: statsResponse.data.contentCreation?.totalDevices ?? 0,
+            activeTasks: statsResponse.data.systemHealth?.activeTasks ?? 0,
+            overdueTasks: statsResponse.data.systemHealth?.failedTasks ?? 0,
+            onlineDevices: statsResponse.data.systemHealth?.onlineDevices ?? 0,
+            offlineDevices: statsResponse.data.systemHealth?.offlineDevices ?? 0,
+            connectedRooms: 0,
+            roomsWithPassword: 0,
+            roomTypeDistribution: {},
+            averageRoomsPerUser: 0,
           });
         }
       } catch (err) {
-        // Optionally handle error
         console.error('Failed to fetch statistics:', err);
       }
     };
@@ -85,17 +122,56 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewContent stats={stats} recentActivity={recentActivity} />;
+        return (
+          <OverviewContent 
+            stats={stats} 
+            recentActivity={recentActivity}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       case 'users':
-        return <UsersContent stats={stats} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+        return (
+          <UsersContent 
+            stats={stats} 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       case 'apartments':
-        return <ApartmentsContent stats={stats} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+        return (
+          <ApartmentsContent 
+            stats={stats} 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       case 'rooms':
-        return <RoomsContent stats={stats} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+        return (
+          <RoomsContent 
+            stats={stats} 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       case 'devices':
-        return <DevicesContent stats={stats} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+        return (
+          <DevicesContent 
+            stats={stats} 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       case 'tasks':
-        return <TasksContent stats={stats} />;
+        return (
+          <TasksContent 
+            stats={stats}
+            fullAnalytics={fullAnalytics}
+          />
+        );
       default:
         return (
           <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-900 transition-colors">
@@ -116,6 +192,7 @@ const AdminDashboard = ({ darkMode, setDarkMode }) => {
         setActiveTab={setActiveTab}
         sidebarItems={sidebarItems}
         stats={stats}
+        fullAnalytics={fullAnalytics}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-gray-900 transition-colors">

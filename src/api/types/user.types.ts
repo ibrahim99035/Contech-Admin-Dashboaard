@@ -70,6 +70,12 @@ export interface UserAnalysis {
   averageDevicesPerUser: number;
   averageTasksPerUser: number;
   recentRegistrations: number;
+  // Room analytics
+  totalRooms: number;
+  connectedRooms: number;
+  roomsWithPassword: number;
+  roomTypeDistribution: Record<string, number>;
+  averageRoomsPerUser: number;
 }
 
 export interface Pagination {
@@ -112,6 +118,7 @@ export interface UserStatistics {
   };
   contentCreation: {
     totalApartments: number;
+    totalRooms: number;
     totalDevices: number;
     totalTasks: number;
     averageApartmentsPerUser: number;

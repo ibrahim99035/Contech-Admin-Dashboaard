@@ -12,13 +12,16 @@ import {
   Trash2
 } from 'lucide-react';
 import StatCard from './StatCard';
+import UserModal from './Users/modal/UserModal';
 import { userAdminApi } from '../../api/userAdmin.api';
 
-const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
+const UsersContent = ({ stats, searchTerm, setSearchTerm, fullAnalytics }) => {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const limit = 10; // You can adjust this as needed
 
   useEffect(() => {
@@ -55,6 +58,27 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
       : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
   };
 
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleUserUpdate = (userId, updates) => {
+    setUsers(users.map(user => 
+      user._id === userId ? { ...user, ...updates } : user
+    ).filter(user => !user.deleted));
+    
+    // Update selected user if it's being modified
+    if (selectedUser && selectedUser._id === userId) {
+      setSelectedUser(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -62,17 +86,33 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">User Management</h2>
           <p className="text-gray-600 dark:text-gray-400">Manage user accounts and permissions</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-          <Plus className="w-4 h-4" />
-          <span>Add User</span>
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Users" value={stats.totalUsers} icon={Users} color="blue" />
-        <StatCard title="Active Users" value={stats.activeUsers ?? '-'} icon={UserCheck} color="green" />
-        <StatCard title="Inactive Users" value={stats.inactiveUsers ?? '-'} icon={UserX} color="red" />
-        <StatCard title="Admins" value={stats.roleDistribution?.admin ?? '-'} icon={Shield} color="purple" />
+        <StatCard 
+          title="Total Users" 
+          value={fullAnalytics?.totalUsers || stats.totalUsers || 0} 
+          icon={Users} 
+          color="blue" 
+        />
+        <StatCard 
+          title="Active Users" 
+          value={fullAnalytics?.activeUsers || 0} 
+          icon={UserCheck} 
+          color="green" 
+        />
+        <StatCard 
+          title="Inactive Users" 
+          value={fullAnalytics?.inactiveUsers || 0} 
+          icon={UserX} 
+          color="red" 
+        />
+        <StatCard 
+          title="Admins" 
+          value={fullAnalytics?.roleDistribution?.admin || 0} 
+          icon={Shield} 
+          color="purple" 
+        />
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
@@ -104,8 +144,7 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
                 <th className="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Apartment</th>
                 <th className="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Join Date</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Open</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
@@ -148,19 +187,13 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
                         {user.active ? 'active' : 'inactive'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                          <Trash2 className="w-4 h-4" />
+                        <button 
+                          onClick={() => handleUserClick(user)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          <Eye className="w-6 h-6" />
                         </button>
                       </div>
                     </td>
@@ -174,7 +207,7 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
         {pagination && (
           <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 dark:border-gray-800">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {pagination.startIndex + 1} to {pagination.endIndex + 1} of {pagination.total} users
+              Showing {pagination.startIndex} to {pagination.endIndex} of {pagination.total} users
             </span>
             <div className="flex space-x-2">
               <button
@@ -196,6 +229,14 @@ const UsersContent = ({ stats, searchTerm, setSearchTerm }) => {
           </div>
         )}
       </div>
+
+      {/* User Modal */}
+      <UserModal
+        user={selectedUser}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onUserUpdate={handleUserUpdate}
+      />
     </div>
   );
 };
